@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>MultiSigWallet</title>
+  <script src="https://cdn.jsdelivr.net/npm/web3@1.0.0/dist/web3.min.js"></script>
+  <script>
+    // Replace with the address of your deployed contract
+    const contractAddress = '0x123...';
+    
+    // Replace with the ABI of your contract
+    const abi = [
+      {
+        "inputs": [
+          {
+            "internalType": "address[]",
+            "name": "_owners",
+            "type": "address[]"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_numConfirmationsRequired",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "receiver",
+            "type": "address"
+          }
+        ],
+        "name": "sendEther",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "transactionId",
+            "type": "uint256"
+          }
+        ],
+        "name": "approveTransaction",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "transactionId",
+            "type": "uint256"
+          }
+        ],
+        "name": "revokeApproval",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "recipient",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes",
+            "name": "data",
+            "type": "bytes"
+          }
+        ],
+        "name": "submitTransaction",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "transactionId",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "payable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "transactionId",
+            "type": "uint256"
+          }
+        ],
+        "name": "executeTransaction",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "name": "transactions",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "destination",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "value",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes",
+            "name": "data",
+            "type": "bytes"
+          },
+          
+         //line-break
+
+      {
+        "internalType": "bool",
+        "name": "executed",
+        "type": "bool"
+      },
+      {
+        "internalType": "uint256",
+        "name": "numConfirmations",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bool[3]",
+        "name": "confirmations",
+        "type": "bool[3]"
+      },
+      {
+        "internalType": "uint256",
+        "name": "timeLock",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getOwners",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "",
+        "type": "address[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getNumConfirmationsRequired",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+];
+
+let web3;
+
+async function loadWeb3() {
+  if (window.ethereum) {
+    web3 = new Web3(window.ethereum);
+    await window.ethereum.enable();
+  } else if (window.web3) {
+    web3 = new Web3(window.web3.currentProvider);
+  } else {
+    alert("Please install and connect to MetaMask to use this dApp");
+  }
+}
+
+async function loadContract() {
+  const contract = new web3.eth.Contract(abi, contractAddress);
+  return contract;
+}
+
+async function getOwners(contract) {
+  const owners = await contract.methods.getOwners().call();
+  return owners;
+}
+
+async function getNumConfirmationsRequired(contract) {
+  const numConfirmationsRequired = await contract.methods.getNumConfirmationsRequired().call();
+  return numConfirmationsRequired;
+}
+
+async function submitTransaction(contract, recipient, amount) {
+  const data = web3.utils.asciiToHex("multiSigWallet transaction");
+  const tx = await contract.methods.submitTransaction(recipient, amount, data).send({from: web3.eth.defaultAccount});
+  console.log(tx);
+}
+
+async function approveTransaction(contract, transactionId) {
+  const tx = await contract.methods.approveTransaction(transactionId).send({from: web3.eth.defaultAccount});
+  console.log(tx);
+}
+
+async function revokeApproval(contract, transactionId) {
+  const tx = await contract.methods.revokeApproval(transactionId).send({from: web3.eth.defaultAccount});
+  console.log(tx);
+}
+
+async function executeTransaction(contract, transactionId) {
+  const tx = await contract.methods.executeTransaction(transactionId).send({from: web3.eth.defaultAccount});
+  console.log(tx);
+}
+
+async function sendEther(contract, receiver, amount) {
+  const tx = await contract.methods.sendEther(receiver).send({from: web3.eth.defaultAccount, value: amount});
+  console.log(tx);
+}
+
+async function getTransactions(contract) {
+  const transactions = [];
+  const transactionCount = await contract.methods.getTransactionCount().call();
+  for (let i = 0; i < transactionCount; i++) {
+    const transaction = await contract.methods.transactions(i).call();
+    transactions.push(transaction);
+  }
+  return transactions;
+}
+
+async function displayOwners() {
+  const contract = await loadContract();
+  const owners = await getOwners
+
+//line-break
+
+  let ownersHtml = "<ul>";
+  for (let i = 0; i < owners.length; i++) {
+    ownersHtml += `<li>${owners[i]}</li>`;
+  }
+  ownersHtml += "</ul>";
+  document.getElementById("owners").innerHTML = ownersHtml;
+}
+
+async function displayNumConfirmationsRequired() {
+  const contract = await loadContract();
+  const numConfirmationsRequired = await getNumConfirmationsRequired(contract);
+  document.getElementById("num-confirmations-required").innerHTML = numConfirmationsRequired;
+}
+
+async function displayTransactions() {
+  const contract = await loadContract();
+  const transactions = await getTransactions(contract);
+  let transactionsHtml = "<ul>";
+  for (let i = 0; i < transactions.length; i++) {
+    transactionsHtml += `<li>Transaction ID: ${i}<br>`;
+    transactionsHtml += `Recipient: ${transactions[i].recipient}<br>`;
+    transactionsHtml += `Amount: ${web3.utils.fromWei(transactions[i].amount)} ETH<br>`;
+    transactionsHtml += `Data: ${web3.utils.hexToAscii(transactions[i].data)}<br>`;
+    transactionsHtml += `Num Confirmations: ${transactions[i].numConfirmations}<br>`;
+    transactionsHtml += `Executed: ${transactions[i].executed}<br>`;
+    transactionsHtml += `Time Lock: ${transactions[i].timeLock}<br>`;
+    transactionsHtml += `Confirmed by:<br><ul>`;
+    for (let j = 0; j < owners.length; j++) {
+      if (transactions[i].confirmations[j]) {
+        transactionsHtml += `<li>${owners[j]}</li>`;
+      }
+    }
+    transactionsHtml += `</ul></li>`;
+  }
+  transactionsHtml += "</ul>";
+  document.getElementById("transactions").innerHTML = transactionsHtml;
+}
+
+async function refreshPage() {
+  await displayOwners();
+  await displayNumConfirmationsRequired();
+  await displayTransactions();
+}
+
+async function handleSubmit() {
+  const contract = await loadContract();
+  const recipient = document.getElementById("recipient").value;
+  const amount = web3.utils.toWei(document.getElementById("amount").value);
+  await submitTransaction(contract, recipient, amount);
+  await refreshPage();
+}
+
+async function handleApprove(transactionId) {
+  const contract = await loadContract();
+  await approveTransaction(contract, transactionId);
+  await refreshPage();
+}
+
+async function handleRevoke(transactionId) {
+  const contract = await loadContract();
+  await revokeApproval(contract, transactionId);
+  await refreshPage();
+}
+
+async function handleExecute(transactionId) {
+  const contract = await loadContract();
+  await executeTransaction(contract, transactionId);
+  await refreshPage();
+}
+
+async function handleSend() {
+  const contract = await loadContract();
+  const receiver = document.getElementById("receiver").value;
+  const amount = web3.utils.toWei(document.getElementById("ether-amount").value);
+  await sendEther(contract, receiver, amount);
+  await refreshPage();
+}
+
+window.addEventListener("load", async () => {
+  await loadWeb3();
+  await refreshPage();
+  document.getElementById("submit-transaction").addEventListener("click", handleSubmit);
+  document.getElementById("send-ether").addEventListener("click", handleSend);
+});
+
+//line-break
+
+async function loadWeb3() {
+  if (window.ethereum) {
+    window.web3 = new Web3(window.ethereum);
+    await window.ethereum.enable();
+  } else if (window.web3) {
+    window.web3 = new Web3(window.web3.currentProvider);
+  } else {
+    alert("Please install MetaMask to use this dApp!");
+  }
+}
+
+async function loadContract() {
+  const networkId = await web3.eth.net.getId();
+  const contractAddress = "0x33A5215bADaA1415C5EA5f5c73C2d0C14cDE8c50"; // Replace with your deployed contract address
+  const contractAbi = [
+    // Paste your contract ABI here
+  ];
+  return new web3.eth.Contract(contractAbi, contractAddress);
+}
+
+async function getOwners(contract) {
+  return await contract.methods.getOwners().call();
+}
+
+async function getNumConfirmationsRequired(contract) {
+  return await contract.methods.numConfirmationsRequired().call();
+}
+
+async function getTransactions(contract) {
+  const numTransactions = await contract.methods.getTransactionCount().call();
+  const transactions = [];
+  for (let i = 0; i < numTransactions; i++) {
+    transactions.push(await contract.methods.transactions(i).call());
+  }
+  return transactions;
+}
+
+async function submitTransaction(contract, recipient, amount) {
+  await contract.methods.submitTransaction(recipient, amount).send({ from: web3.eth.defaultAccount });
+}
+
+async function approveTransaction(contract, transactionId) {
+  await contract.methods.approveTransaction(transactionId).send({ from: web3.eth.defaultAccount });
+}
+
+async function revokeApproval(contract, transactionId) {
+  await contract.methods.revokeApproval(transactionId).send({ from: web3.eth.defaultAccount });
+}
+
+async function executeTransaction(contract, transactionId) {
+  await contract.methods.executeTransaction(transactionId).send({ from: web3.eth.defaultAccount });
+}
+
+async function sendEther(contract, receiver, amount) {
+  await web3.eth.sendTransaction({ from: web3.eth.defaultAccount, to: receiver, value: amount });
+}
+
+//line-break
+
+window.addEventListener("load", async () => {
+  await loadWeb3();
+  const contract = await loadContract();
+
+  // Display contract information
+  const owners = await getOwners(contract);
+  const numConfirmationsRequired = await getNumConfirmationsRequired(contract);
+  const transactions = await getTransactions(contract);
+
+  const ownersElement = document.getElementById("owners");
+  const numConfirmationsElement = document.getElementById("num-confirmations");
+  const transactionsElement = document.getElementById("transactions");
+
+  ownersElement.innerHTML = owners.join(", ");
+  numConfirmationsElement.innerHTML = numConfirmationsRequired;
+
+  transactions.forEach((transaction, index) => {
+    const row = document.createElement("tr");
+    const idCell = document.createElement("td");
+    const fromCell = document.createElement("td");
+    const toCell = document.createElement("td");
+    const amountCell = document.createElement("td");
+    const statusCell = document.createElement("td");
+    const approveButtonCell = document.createElement("td");
+    const revokeButtonCell = document.createElement("td");
+    const executeButtonCell = document.createElement("td");
+
+    idCell.innerHTML = index;
+    fromCell.innerHTML = transaction.from;
+    toCell.innerHTML = transaction.to;
+    amountCell.innerHTML = web3.utils.fromWei(transaction.value);
+    statusCell.innerHTML = transaction.executed ? "Executed" : "Pending";
+
+    if (!transaction.executed && transaction.approvals.includes(web3.eth.defaultAccount)) {
+      const revokeButton = document.createElement("button");
+      revokeButton.innerHTML = "Revoke";
+      revokeButton.addEventListener("click", async () => {
+        await revokeApproval(contract, index);
+        location.reload();
+      });
+      revokeButtonCell.appendChild(revokeButton);
+    } else if (!transaction.executed) {
+      const approveButton = document.createElement("button");
+      approveButton.innerHTML = "Approve";
+      approveButton.addEventListener("click", async () => {
+        await approveTransaction(contract, index);
+        location.reload();
+      });
+      approveButtonCell.appendChild(approveButton);
+    }
+
+    if (!transaction.executed && transaction.approvals.length >= numConfirmationsRequired) {
+      const executeButton = document.createElement("button");
+      executeButton.innerHTML = "Execute";
+      executeButton.addEventListener("click", async () => {
+        await executeTransaction(contract, index);
+        location.reload();
+      });
+      executeButtonCell.appendChild(executeButton);
+    }
+
+    row.appendChild(idCell);
+    row.appendChild(fromCell);
+    row.appendChild(toCell);
+    row.appendChild(amountCell);
+    row.appendChild(statusCell);
+    row.appendChild(approveButtonCell);
+    row.appendChild(revokeButtonCell);
+    row.appendChild(executeButtonCell);
+
+    transactionsElement.appendChild(row);
+  });
+
+  // Add event listeners to the submit transaction and send Ether buttons
+  const submitTransactionButton = document.getElementById("submit-transaction-button");
+  const recipientInput = document.getElementById("recipient-input");
+  const amountInput = document.getElementById("amount-input");
+
+  submitTransactionButton.addEventListener("click", async () => {
+    const recipient = recipientInput.value;
+    const amount = web3.utils.toWei(amountInput.value);
+    await submitTransaction(contract, recipient, amount);
+    location.reload();
+  });
+
+  const sendEtherButton = document.getElementById("send-ether-button");
+  const receiverInput = document.getElementById("receiver-input");
+  const etherAmountInput = document.getElementById("ether-amount-input");
+
+  sendEtherButton.addEventListener("click", async () => {
+    const receiver = receiverInput.value;
+    const amount = web3.utils.toWei(etherAmountInput.value, "ether");
+    await sendEther(contract, receiver, amount);
+    location.reload();
+  });
+});
+
+
+//different file?
+
+const web3 = new Web3(Web3.givenProvider);
+const contractAddress = "CONTRACT_ADDRESS";
+const contractABI = CONTRACT_ABI;
+
+const multiSigWallet = new web3.eth.Contract(contractABI, contractAddress);
+
+const accountSelect = document.getElementById("account-select");
+const balanceDisplay = document.getElementById("balance-display");
+const recipientInput = document.getElementById("recipient-input");
+const amountInput = document.getElementById("amount-input");
+const submitButton = document.getElementById("submit-button");
+const receiverInput = document.getElementById("receiver-input");
+const etherAmountInput = document.getElementById("ether-amount-input");
+const sendEtherButton = document.getElementById("send-ether-button");
+const transactionsTable = document.getElementById("transactions-table");
+
+let accounts;
+
+web3.eth.getAccounts().then((res) => {
+  accounts = res;
+  for (let i = 0; i < accounts.length; i++) {
+    const option = document.createElement("option");
+    option.value = accounts[i];
+    option.text = accounts[i];
+    accountSelect.add(option);
+  }
+  web3.eth.getBalance(accounts[0]).then((res) => {
+    balanceDisplay.textContent = "Balance: " + web3.utils.fromWei(res, "ether") + " ETH";
+  });
+});
+
+multiSigWallet.methods.getOwners().call().then((res) => {
+  const ownersDisplay = document.getElementById("owners-display");
+  ownersDisplay.textContent = "Owners: " + res.join(", ");
+});
+
+multiSigWallet.methods.required().call().then((res) => {
+  const requiredDisplay = document.getElementById("required-display");
+  requiredDisplay.textContent = "Required: " + res;
+});
+
+function refreshTransactions() {
+  transactionsTable.innerHTML = "";
+  multiSigWallet.methods.getTransactionCount().call().then((res) => {
+    for (let i = 0; i < res; i++) {
+      multiSigWallet.methods.transactions(i).call().then((res) => {
+        const row = transactionsTable.insertRow(-1);
+        row.insertCell(0).textContent = i;
+        row.insertCell(1).textContent = res.sender;
+        row.insertCell(2).textContent = res.recipient;
+        row.insertCell(3).textContent = web3.utils.fromWei(res.amount, "ether");
+        const statusCell = row.insertCell(4);
+        if (res.executed) {
+          statusCell.textContent = "Executed";
+        } else if (res.approvals.length >= Number(res.required)) {
+          statusCell.textContent = "Approved";
+        } else {
+          statusCell.textContent = "Pending";
+        }
+        const approveButton = document.createElement("button");
+        approveButton.textContent = "Approve";
+        approveButton.addEventListener("click", () => {
+          multiSigWallet.methods.approveTransaction(i).send({ from: accounts[accountSelect.selectedIndex] }).then(() => {
+            location.reload();
+          });
+        });
+        const revokeButton = document.createElement("button");
+        revokeButton.textContent = "Revoke";
+        revokeButton.addEventListener("click", () => {
+          multiSigWallet.methods.revokeApproval(i).send({ from: accounts[accountSelect.selectedIndex] }).then(() => {
+            location.reload();
+          });
+        });
+        const executeButton = document.createElement("button");
+        executeButton.textContent = "Execute";
+        executeButton.addEventListener("click", () => {
+          multiSigWallet.methods.executeTransaction(i).send({ from: accounts[accountSelect.selectedIndex] }).then(() => {
+            location.reload();
+          });
+        });
+        const buttonsCell = row.insertCell(5);
+        if (!res.executed && res.approvals.includes(accounts[accountSelect.selectedIndex])) {
+          buttonsCell.appendChild(revokeButton);
+        } else if (!res.execexecuted && res.confirmations < Number(res.required)) {
+buttonsCell.appendChild(approveButton);
+} else if (!res.executed && res.approvals.length >= Number(res.required)) {
+buttonsCell.appendChild(executeButton);
+}
+});
+}
+});
+}
+
+refreshTransactions();
+
+submitButton.addEventListener("click", () => {
+const recipient = recipientInput.value;
+const amount = web3.utils.toWei(amountInput.value, "ether");
+multiSigWallet.methods.submitTransaction(recipient, amount).send({ from: accounts[accountSelect.selectedIndex] }).then(() => {
+location.reload();
+});
+});
+
+sendEtherButton.addEventListener("click", () => {
+const receiver = receiverInput.value;
+const etherAmount = etherAmountInput.value;
+web3.eth.sendTransaction({
+from: accounts[accountSelect.selectedIndex],
+to: receiver,
+value: web3.utils.toWei(etherAmount, "ether")
+}).then(() => {
+location.reload();
+});
+});
+
+"""
+
+Note that you will need to replace "CONTRACT_ADDRESS" and "CONTRACT_ABI" 
+with the actual values for your contract. Also, make sure to import the 
+Web3.js library in your HTML file before the JavaScript code is executed.
+
+"""
+
+// Execute transaction button event listener
+executeButton.addEventListener("click", () => {
+  multiSigWallet.methods.executeTransaction(transactionIdInput.value).send({ from: accounts[accountSelect.selectedIndex] }).then(() => {
+    location.reload();
+  });
+});
+
+// Approve transaction button event listener
+approveButton.addEventListener("click", () => {
+  multiSigWallet.methods.approveTransaction(transactionIdInput.value).send({ from: accounts[accountSelect.selectedIndex] }).then(() => {
+    location.reload();
+  });
+});
+
+// Revoke approval button event listener
+revokeButton.addEventListener("click", () => {
+  multiSigWallet.methods.revokeApproval(transactionIdInput.value).send({ from: accounts[accountSelect.selectedIndex] }).then(() => {
+    location.reload();
+  });
+});
+
+// Add owner button event listener
+addOwnerButton.addEventListener("click", () => {
+  multiSigWallet.methods.addOwner(newOwnerInput.value).send({ from: accounts[accountSelect.selectedIndex] }).then(() => {
+    location.reload();
+  });
+});
+
+// Remove owner button event listener
+removeOwnerButton.addEventListener("click", () => {
+  multiSigWallet.methods.removeOwner(ownerToRemoveInput.value).send({ from: accounts[accountSelect.selectedIndex] }).then(() => {
+    location.reload();
+  });
+});
+
+// Replace owner button event listener
+replaceOwnerButton.addEventListener("click", () => {
+  multiSigWallet.methods.replaceOwner(ownerToReplaceInput.value, newOwnerForReplaceInput.value).send({ from: accounts[accountSelect.selectedIndex] }).then(() => {
+    location.reload();
+  });
+});
+
+// Change requirement button event listener
+changeRequirementButton.addEventListener("click", () => {
+  multiSigWallet.methods.changeRequirement(newRequirementInput.value).send({ from: accounts[accountSelect.selectedIndex] }).then(() => {
+    location.reload();
+  });
+});
+
+// Helper function to display transaction status message
+function displayStatus(status, message) {
+  statusCell.innerHTML = status;
+  messageCell.innerHTML = message;
+}
+
+// Helper function to display error message
+function displayError(error) {
+  statusCell.innerHTML = "Error";
+  messageCell.innerHTML = error.message;
+}
+
+// Helper function to format Ethereum addresses
+function formatAddress(address) {
+  return address.substring(0, 6) + "..." + address.substring(38);
+}
+
+// Helper function to format Ethereum values
+function formatValue(value) {
+  return web3.utils.fromWei(value, "ether") + " ETH";
+}
+
+// Helper function to refresh the accounts dropdown list
+function refreshAccounts() {
+  web3.eth.getAccounts().then((_accounts) => {
+    accounts = _accounts;
+    accountSelect.innerHTML = "";
+    for (let i = 0; i < accounts.length; i++) {
+      const option = document.createElement("option");
+      option.text = formatAddress(accounts[i]);
+      accountSelect.add(option);
+    }
+  });
+}
+
+// Helper function to refresh the transaction table
+function refreshTransactions() {
+  multiSigWallet.methods.getTransactionCount(true, false).call().then((count) => {
+    transactionTable.innerHTML = "";
+    for (let i = 0; i < count; i++) {
+      multiSigWallet.methods.transactions(i).call().then((res) => {
+        const row = transactionTable.insertRow();
+        const idCell = row.insertCell();
+        const senderCell = row.insertCell();
+        const recipientCell = row.insertCell();
+        const valueCell = row.insertCell();
+        const statusCell = row.insertCell();
+        const messageCell = row.insertCell();
+        const buttonsCell = row.insertCell();
+        idCell.innerHTML = i;
+        senderCell.innerHTML = formatAddress(res.sender);
+        recipientCell.innerHTML = formatAddress(res.recipient);
+        valueCell.innerHTML = formatValue(res.value);
+        statusCell.innerHTML = res.executed ? "Executed" : "Pending";
+        messageCell.innerHTML = "";
+        if (res.approvals.includes(accounts[accountSelect.selectedIndex])) {
+          messageCell.innerHTML = "You approved this transaction";
+        }
+        const transactionIdInput = document.createElement("input");
+        transactionIdInput.type = "hidden";
+        transactionIdInput.value = i;
+        buttonsCell.appendChild(transactionIdInput);
+        if (!res.executed && !res.approvals.includes(accounts[accountSelect.selectedIndex])) {
+          const approveButton = document.createElement("button");
+          approveButton.innerHTML = "Approve";
+          approveButton.addEventListener("click", () => {
+            multiSigWallet.methods.approveTransaction(i).send({ from: accounts[accountSelect.selectedIndex] }).then(() => {
+              location.reload();
+            }).catch(displayError);
+          });
+          buttonsCell.appendChild(approveButton);
+        }
+        if (!res.executed && res.approvals.length >= Number(res.required) && res.approvals.includes(accounts[accountSelect.selectedIndex])) {
+          const executeButton = document.createElement("button");
+          executeButton.innerHTML = "Execute";
+          executeButton.addEventListener("click", () => {
+            multiSigWallet.methods.executeTransaction(i).send({ from: accounts[accountSelect.selectedIndex] }).then(() => {
+              location.reload();
+            }).catch(displayError);
+          });
+          buttonsCell.appendChild(executeButton);
+        }
+      }).catch(displayError);
+    }
+  }).catch(displayError);
+}
+
+// Refresh accounts and transactions on page load
+refreshAccounts();
+refreshTransactions();
+
+// Submit transaction button event listener
+submitButton.addEventListener("click", () => {
+  const recipient = recipientInput.value;
+  const amount = web3.utils.toWei(amountInput.value, "ether");
+  multiSig
+// Check recipient address format
+if (!web3.utils.isAddress(recipient)) {
+displayStatus("Error", "Invalid recipient address");
+return;
+}
+// Check amount is greater than 0
+if (Number(amount) <= 0) {
+displayStatus("Error", "Amount must be greater than 0");
+return;
+}
+// Check required approvals is valid
+const required = requiredInput.value;
+if (Number(required) < 1 || Number(required) > accounts.length) {
+displayStatus("Error", "Invalid required approvals");
+return;
+}
+// Create new transaction
+multiSigWallet.methods.submitTransaction(recipient, amount, required).send({ from: accounts[accountSelect.selectedIndex] }).then(() => {
+displayStatus("Success", "Transaction submitted");
+refreshTransactions();
+}).catch(displayError);
+});
+
+// Refresh transactions every 10 seconds
+setInterval(refreshTransactions, 10000);
